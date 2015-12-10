@@ -20,11 +20,25 @@ module.exports = Class({
 
     this.paths = {
       base: path.join(__dirname, '..', '..'),
-      jsio: path.dirname(resolve.sync('jsio')),
-      squill: path.join(__dirname, '..', '..', 'node_modules', 'squill'),
-
       stylusMain: path.join(this.srcPath, 'stylus', 'main.styl')
     };
+
+    // lookup squill and jsio dynamically, prefer a version found in the module
+    // in case the module uses a specific version of squill/jsio
+    try {
+      var squillPath = path.dirname(resolve.sync('squill/Widget', {basedir: this.modulePath}));
+      this.paths.squill = squillPath;
+    } catch (e) {
+      // squill not found in module
+    }
+
+    var jsioPath;
+    try {
+      jsioPath = path.dirname(resolve.sync('jsio', {basedir: this.modulePath}));
+    } catch (e) {
+      jsioPath = path.dirname(resolve.sync('jsio'));
+    }
+    this.paths.jsio = jsioPath;
 
     this.logger = logging.get('JsioBuilder.' + this.moduleName + '.' + this.src);
 
@@ -73,6 +87,15 @@ module.exports = Class({
     jsio.path.add(compilerPath);
 
     var compiler = jsio('import jsio_compile.compiler');
+    var pathCache = {
+        jsio: this.paths.jsio,
+        src: basePath
+      };
+
+    if (this.paths.squill) {
+      pathCache.squill = this.paths.squill;
+    }
+
     compiler.start(['jsio_compile', jsPath, 'import src.' + moduleMain], {
       cwd: basePath,
       environment: 'browser',
@@ -81,11 +104,7 @@ module.exports = Class({
       appendImport: true,
       compressSources: this.compress,
       compressResult: this.compress,
-      pathCache: {
-        jsio: this.paths.jsio,
-        squill: this.paths.squill,
-        src: basePath
-      },
+      pathCache: pathCache,
       interface: {
         setCompiler: function (compiler) { this.compiler = compiler; },
         run: function (args, opts) { this.compiler.run(args, opts); },
