@@ -102,6 +102,15 @@ module.exports = Class({
       .pipe(gulp.dest(this.path.DEST_FONT));
   },
 
+  _browserify: function (opts) {
+    if (!opts) { opts = {}; }
+    if (!opts.entries) { opts.entries = [this.path.ENTRY_POINT]; }
+    if (!opts.transform) { opts.transform = [babelify.configure({stage: 0})]; }
+    if (!opts.paths) { opts.paths = [path.join(this.modulePath, 'node_modules')]; }
+
+    return browserify(opts);
+  },
+
   // ['copy', 'font', 'stylus']
   _watch: function() {
     this.sourcemaps = true;
@@ -114,11 +123,11 @@ module.exports = Class({
     gulp.watch(this.path.HTML, this.copy.bind(this));
     gulp.watch(this.path.STYLUS_FILES, this.stylus.bind(this));
 
-    var watcher  = watchify(browserify({
-      entries: [this.path.ENTRY_POINT],
-      transform: [babelify.configure({stage: 0})],
+    var watcher  = watchify(this._browserify({
       debug: true,
-      cache: {}, packageCache: {}, fullPaths: true
+      cache: {},
+      packageCache: {},
+      fullPaths: true
     }));
 
     return watcher.on('update', function () {
@@ -140,11 +149,14 @@ module.exports = Class({
   },
 
   build: function() {
-    return browserify({
-      entries: [this.path.ENTRY_POINT],
-      transform: [babelify.configure({stage: 0})],
-    })
+    var logger = this.logger;
+    return this._browserify()
       .bundle()
+      .on('error', function (e) {
+        logger.error("ERROR!")
+        logger.error(e.stack || e)
+        this.emit('end');
+      })
       .pipe(source(this.path.MINIFIED_OUT))
       .pipe(plugins.streamify(plugins.uglify()))
       .pipe(gulp.dest(this.path.DEST_BUILD));
