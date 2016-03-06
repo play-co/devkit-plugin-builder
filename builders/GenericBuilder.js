@@ -10,6 +10,7 @@ var nib = require('nib');
 var Promise = require('bluebird');
 var mainBowerFiles = require('main-bower-files');
 var bower = require('bower');
+var mergeStream = require('merge-stream');
 
 var Builder = require('./Builder');
 
@@ -78,8 +79,9 @@ module.exports = Class({
   mainBowerFiles: function() {
     var jsFilter = plugins.filter('**/*.js', {restore: true});
     var cssFilter = plugins.filter('**/*.css', {restore: true});
+    var fontFilter = plugins.filter('**/*.{eot,ttf,woff,woff2}');
 
-    return gulp.src(mainBowerFiles())
+    var mainStream = gulp.src(mainBowerFiles())
       .pipe(jsFilter)
         .pipe(plugins.debug({ title: 'bower js' }))
         .pipe(plugins.concat('bower.js'))
@@ -89,6 +91,14 @@ module.exports = Class({
         .pipe(plugins.concat('bower.css'))
         .pipe(cssFilter.restore)
       .pipe(gulp.dest(this.path.BOWER_DEST));
+
+    var fontStream = gulp.src(mainBowerFiles())
+      .pipe(fontFilter)
+        .pipe(plugins.debug({ title: 'bower fonts' }))
+      .pipe(gulp.dest(this.path.DEST_FONT));
+
+    // TODO: this causes double debug logs
+    return mergeStream(mainStream, fontStream);
   },
 
   copy: function() {
