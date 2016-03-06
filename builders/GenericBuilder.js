@@ -1,19 +1,21 @@
 var path = require('path');
 var fs = require('fs');
+
 var gulp = require('gulp');
 var plugins = require('gulp-load-plugins')();
-var source = require('vinyl-source-stream');
-var browserify = require('browserify');
-var watchify = require('watchify');
-var babelify = require('babelify');
-var nib = require('nib');
-var Promise = require('bluebird');
-var mainBowerFiles = require('main-bower-files');
-var bower = require('bower');
-var mergeStream = require('merge-stream');
+
+var lazy = require('lazy-cache')(require);
+lazy('vinyl-source-stream', 'source');
+lazy('browserify');
+lazy('watchify');
+lazy('babelify');
+lazy('nib');
+lazy('bluebird', 'Promise');
+lazy('main-bower-files');
+lazy('bower');
+lazy('merge-stream');
 
 var Builder = require('./Builder');
-
 var logging = require('../logging');
 
 
@@ -52,7 +54,7 @@ module.exports = Class({
       .pipe(plugins.stylus({
 
         // cross-platform css rules
-        use: nib(),
+        use: lazy.nib(),
 
         // inline @import-ed css files
         'include css': true,
@@ -73,7 +75,7 @@ module.exports = Class({
   },
 
   bowerInstall: function() {
-    return bower.commands.install();
+    return lazy.bower.commands.install();
   },
 
   mainBowerFiles: function() {
@@ -81,7 +83,7 @@ module.exports = Class({
     var cssFilter = plugins.filter('**/*.css', {restore: true});
     var fontFilter = plugins.filter('**/*.{eot,ttf,woff,woff2}');
 
-    var mainStream = gulp.src(mainBowerFiles())
+    var mainStream = gulp.src(lazy.mainBowerFiles())
       .pipe(jsFilter)
         .pipe(plugins.debug({ title: 'bower js' }))
         .pipe(plugins.concat('bower.js'))
@@ -92,13 +94,13 @@ module.exports = Class({
         .pipe(cssFilter.restore)
       .pipe(gulp.dest(this.path.BOWER_DEST));
 
-    var fontStream = gulp.src(mainBowerFiles())
+    var fontStream = gulp.src(lazy.mainBowerFiles())
       .pipe(fontFilter)
         .pipe(plugins.debug({ title: 'bower fonts' }))
       .pipe(gulp.dest(this.path.DEST_FONT));
 
     // TODO: this causes double debug logs
-    return mergeStream(mainStream, fontStream);
+    return lazy.mergeStream(mainStream, fontStream);
   },
 
   copy: function() {
@@ -115,10 +117,10 @@ module.exports = Class({
   _browserify: function (opts) {
     if (!opts) { opts = {}; }
     if (!opts.entries) { opts.entries = [this.path.ENTRY_POINT]; }
-    if (!opts.transform) { opts.transform = [babelify.configure({stage: 0})]; }
+    if (!opts.transform) { opts.transform = [lazy.babelify.configure({stage: 0})]; }
     if (!opts.paths) { opts.paths = [path.join(this.modulePath, 'node_modules')]; }
 
-    return browserify(opts);
+    return lazy.browserify(opts);
   },
 
   // ['copy', 'font', 'stylus']
@@ -133,7 +135,7 @@ module.exports = Class({
     gulp.watch(this.path.HTML, this.copy.bind(this));
     gulp.watch(this.path.STYLUS_FILES, this.stylus.bind(this));
 
-    var watcher  = watchify(this._browserify({
+    var watcher = lazy.watchify(this._browserify({
       debug: true,
       cache: {},
       packageCache: {},
@@ -148,13 +150,13 @@ module.exports = Class({
           logger.log(err.toString());
           this.emit('end');
         })
-        .pipe(source(this.path.OUT))
+        .pipe(lazy.source(this.path.OUT))
         .pipe(plugins.debug())
         .pipe(gulp.dest(this.path.DEST_SRC))
         .pipe(plugins.livereload());
     }.bind(this))
       .bundle()
-      .pipe(source(this.path.OUT))
+      .pipe(lazy.source(this.path.OUT))
       .pipe(gulp.dest(this.path.DEST_SRC));
   },
 
@@ -163,11 +165,10 @@ module.exports = Class({
     return this._browserify()
       .bundle()
       .on('error', function (e) {
-        logger.error("ERROR!")
-        logger.error(e.stack || e)
+        logger.error('ERROR!', e.stack || e);
         this.emit('end');
       })
-      .pipe(source(this.path.MINIFIED_OUT))
+      .pipe(lazy.source(this.path.MINIFIED_OUT))
       .pipe(plugins.streamify(plugins.uglify()))
       .pipe(gulp.dest(this.path.DEST_BUILD));
   },
@@ -182,7 +183,7 @@ module.exports = Class({
 
   runAsPromise: function(taskName) {
     this.logger.info('Starting:', taskName);
-    return new Promise(function(resolve, reject) {
+    return new lazy.Promise(function(resolve, reject) {
       var stream = (this[taskName].bind(this))();
 
       var onEnd = function() {

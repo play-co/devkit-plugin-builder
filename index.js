@@ -1,6 +1,8 @@
 var path = require('path');
-var mkdirp = require('mkdirp');
-var Promise = require('bluebird');
+
+var lazy = require('lazy-cache')(require);
+lazy('mkdirp');
+lazy('bluebird', 'Promise');
 
 var JsioBuilder = require('./builders/JsioBuilder');
 var GenericBuilder = require('./builders/GenericBuilder');
@@ -43,7 +45,7 @@ module.exports = {
 
     // Special case compile
     if (taskName === 'compile') {
-      mkdirp.sync(path.join(modulePath, 'build'));
+      lazy.mkdirp.sync(path.join(modulePath, 'build'));
     }
 
     var pluginBuilders = [];
@@ -56,7 +58,7 @@ module.exports = {
       builder[taskName](tasks);
     });
 
-    Promise.all(tasks)
+    lazy.Promise.all(tasks)
       .then(function() {
         logger.info('Done!');
         cb && cb();

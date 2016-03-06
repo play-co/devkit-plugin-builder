@@ -1,14 +1,16 @@
-var gulp = require('gulp');
-var nib = require('nib');
 var path = require('path');
-var plugins = require('gulp-load-plugins')();
 var fs = require('fs');
-var UglifyJS = require('uglify-js');
-var resolve = require('resolve');
-var Promise = require('bluebird');
+
+var gulp = require('gulp');
+var plugins = require('gulp-load-plugins')();
+
+var lazy = require('lazy-cache')(require);
+lazy('nib');
+lazy('uglify-js', 'UglifyJS');
+lazy('resolve');
+lazy('bluebird', 'Promise');
 
 var Builder = require('./Builder');
-
 var logging = require('../logging');
 
 
@@ -26,7 +28,7 @@ module.exports = Class({
     // lookup squill and jsio dynamically, prefer a version found in the module
     // in case the module uses a specific version of squill/jsio
     try {
-      var squillPath = path.dirname(resolve.sync('squill/Widget', {basedir: this.modulePath}));
+      var squillPath = path.dirname(lazy.resolve.sync('squill/Widget', {basedir: this.modulePath}));
       this.paths.squill = squillPath;
     } catch (e) {
       // squill not found in module
@@ -34,9 +36,9 @@ module.exports = Class({
 
     var jsioPath;
     try {
-      jsioPath = path.dirname(resolve.sync('jsio', {basedir: this.modulePath}));
+      jsioPath = path.dirname(lazy.resolve.sync('jsio', {basedir: this.modulePath}));
     } catch (e) {
-      jsioPath = path.dirname(resolve.sync('jsio'));
+      jsioPath = path.dirname(lazy.resolve.sync('jsio'));
     }
     this.paths.jsio = jsioPath;
 
@@ -45,8 +47,8 @@ module.exports = Class({
     this.compress = false;
     this.sourcemaps = false;
 
-    this.promiseBuildStylus = Promise.promisify(this._buildStylus.bind(this));
-    this.promiseBuildJS = Promise.promisify(this._buildJS.bind(this));
+    this.promiseBuildStylus = lazy.Promise.promisify(this._buildStylus.bind(this));
+    this.promiseBuildJS = lazy.Promise.promisify(this._buildJS.bind(this));
   },
 
 
@@ -55,7 +57,7 @@ module.exports = Class({
 
     var stream = gulp.src(stylusMainPath)
       .pipe(plugins.stylus({
-        use: nib(),
+        use: lazy.nib(),
         sourcemap: this.sourcemaps,
         compress: this.compress
       }))
@@ -122,7 +124,7 @@ module.exports = Class({
           fs.writeFile(filename, code, cb);
         },
         compress: function (filename, src, opts, cb) {
-          var result = UglifyJS.minify(src, {
+          var result = lazy.UglifyJS.minify(src, {
             fromString: true,
             compress: {
               global_defs: {
