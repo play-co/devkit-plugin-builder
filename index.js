@@ -92,7 +92,7 @@ module.exports = {
         cb && cb();
       })
       .catch(function(e) {
-        logger.error(e);
+        logger.error(e.stack || e);
         cb && cb(e);
       });
   }

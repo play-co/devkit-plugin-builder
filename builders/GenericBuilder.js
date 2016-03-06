@@ -133,33 +133,36 @@ module.exports = Class({
       plugins.livereload.listen();
     }
 
-    gulp.watch(this.path.BOWER_JSON, this._bower.bind(this));
-    gulp.watch(this.path.HTML, this.copy.bind(this));
-    gulp.watch(this.path.STYLUS_FILES, this.stylus.bind(this));
+    // Run copy once to make sure development replace happens (index.html)
+    return this.runAsPromise('copy').then(function() {
+      gulp.watch(this.path.BOWER_JSON, this._bower.bind(this));
+      gulp.watch(this.path.HTML, this.copy.bind(this));
+      gulp.watch(this.path.STYLUS_FILES, this.stylus.bind(this));
 
-    var watcher = lazy.watchify(this._browserify({
-      debug: true,
-      cache: {},
-      packageCache: {},
-      fullPaths: true
-    }));
+      var watcher = lazy.watchify(this._browserify({
+        debug: true,
+        cache: {},
+        packageCache: {},
+        fullPaths: true
+      }));
 
-    return watcher.on('update', function () {
-      logger.log('updating...');
-      watcher.bundle()
-        .on('error', function (err) {
-          logger.log(Object.keys(err));
-          logger.log(err.toString());
-          this.emit('end');
-        })
+      watcher.on('update', function () {
+        logger.log('updating...');
+        watcher.bundle()
+          .on('error', function (err) {
+            logger.log(Object.keys(err));
+            logger.log(err.toString());
+            this.emit('end');
+          })
+          .pipe(lazy.source(this.path.OUT))
+          .pipe(plugins.debug())
+          .pipe(gulp.dest(this.path.DEST_SRC))
+          .pipe(plugins.livereload());
+      }.bind(this))
+        .bundle()
         .pipe(lazy.source(this.path.OUT))
-        .pipe(plugins.debug())
-        .pipe(gulp.dest(this.path.DEST_SRC))
-        .pipe(plugins.livereload());
-    }.bind(this))
-      .bundle()
-      .pipe(lazy.source(this.path.OUT))
-      .pipe(gulp.dest(this.path.DEST_SRC));
+        .pipe(gulp.dest(this.path.DEST_SRC));
+    }.bind(this));
   },
 
   build: function() {
@@ -167,7 +170,7 @@ module.exports = Class({
     return this._browserify()
       .bundle()
       .on('error', function (e) {
-        logger.error('ERROR!', e.stack || e);
+        logger.error(e.stack || e);
         this.emit('end');
       })
       .pipe(lazy.source(this.path.MINIFIED_OUT))
@@ -187,6 +190,14 @@ module.exports = Class({
     this.logger.info('Starting:', taskName);
     return new lazy.Promise(function(resolve, reject) {
       var stream = (this[taskName].bind(this))();
+
+      if (lazy.Promise.is(stream)) {
+        return stream;
+      }
+
+      if (!stream) {
+        throw new Error('Must return stream or promise (' + taskName + ') got: ' + (typeof stream));
+      }
 
       var onEnd = function() {
         this.logger.info('Complete:', taskName);

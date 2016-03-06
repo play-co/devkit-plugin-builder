@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-var eeClass = require('ee-class');
+var lazy = require('lazy-cache')(require);
+lazy('ee-class');
+lazy('bluebird', 'Promise');
+
+
 var yargs = require('yargs');
 var argv = yargs
   .usage('Usage: $0 <pluginPath> [options]')
@@ -27,12 +31,17 @@ var argv = yargs
   .argv;
 
 var logging = require('../logging');
-logging.verbose = argv.verbose;
+if (argv.verbose) {
+  logging.verbose = argv.verbose;
+  lazy.Promise.config({
+    longStackTraces: true
+  });
+}
 
 
 // Set up the global Class object
 Class = function(classDef) {
-  return new eeClass(classDef);
+  return new lazy.eeClass(classDef);
 };
 
 
