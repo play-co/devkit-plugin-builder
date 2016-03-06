@@ -11,9 +11,9 @@ lazy('nib');
 lazy('uglify-js', 'UglifyJS');
 lazy('resolve');
 lazy('bluebird', 'Promise');
+lazy('devkit-logging', 'logging');
 
 let Builder = require('./Builder');
-let logging = require('../logging');
 
 
 class JsioBuilder extends Builder {
@@ -42,7 +42,7 @@ class JsioBuilder extends Builder {
     }
     this.paths.jsio = jsioPath;
 
-    this.logger = logging.get('JsioBuilder.' + this.moduleName + '.' + this.src);
+    this.logger = lazy.logging.get('JsioBuilder.' + this.moduleName + '.' + this.src);
 
     this.compress = false;
     this.sourcemaps = false;

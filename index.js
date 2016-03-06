@@ -6,12 +6,12 @@ let lazy = require('lazy-cache')(require);
 lazy('mkdirp');
 lazy('bluebird', 'Promise');
 lazy('merge');
+lazy('devkit-logging', 'logging');
 
 let JsioBuilder = require('./builders/JsioBuilder');
 let GenericBuilder = require('./builders/GenericBuilder');
 
-let logging = require('./logging');
-let logger = logging.get('moduleCompiler');
+let logger = lazy.logging.get('moduleCompiler');
 
 
 module.exports = {

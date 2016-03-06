@@ -3,6 +3,7 @@
 
 let lazy = require('lazy-cache')(require);
 lazy('bluebird', 'Promise');
+lazy('devkit-logging', 'logging');
 
 
 let yargs = require('yargs');
@@ -30,9 +31,8 @@ let argv = yargs
   .epilog('Project: https://github.com/gameclosure/devkit-plugin-builder')
   .argv;
 
-let logging = require('../logging');
 if (argv.verbose) {
-  logging.verbose = argv.verbose;
+  lazy.logging.setDefaultLevel('silly');
   lazy.Promise.config({
     longStackTraces: true
   });
@@ -44,8 +44,6 @@ pluginBuilder.updateOpts(argv);
 
 // MAIN //
 
-let logger = logging.get('pluginBuilder');
-
 let compilePlugin = function(moduleDir, watch, cb) {
   if (watch) {
     pluginBuilder.executeRunnerTask(moduleDir, 'watch', cb);
@@ -55,6 +53,7 @@ let compilePlugin = function(moduleDir, watch, cb) {
 };
 
 if (!argv._ || argv._.length === 0) {
+  let logger = lazy.logging.get('pluginBuilder');
   logger.error('Must specify pluginPath as first positional argument');
   process.exit(1);
 }

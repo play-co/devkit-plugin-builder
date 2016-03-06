@@ -16,9 +16,9 @@ lazy('bluebird', 'Promise');
 lazy('main-bower-files');
 lazy('bower');
 lazy('merge-stream');
+lazy('devkit-logging', 'logging');
 
 let Builder = require('./Builder');
-let logging = require('../logging');
 
 
 class GenericBuilder extends Builder {
@@ -42,7 +42,7 @@ class GenericBuilder extends Builder {
       BOWER_DEST: path.join(this.buildPath, 'bower')
     };
 
-    this.logger = logging.get('GenericBuilder.' + this.moduleName + '.' + this.src);
+    this.logger = lazy.logging.get('GenericBuilder.' + this.moduleName + '.' + this.src);
 
     this.compress = false;
     this.sourcemaps = true;
