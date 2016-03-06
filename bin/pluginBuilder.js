@@ -1,12 +1,12 @@
 #!/usr/bin/env node
+'use strict';
 
-var lazy = require('lazy-cache')(require);
-lazy('ee-class');
+let lazy = require('lazy-cache')(require);
 lazy('bluebird', 'Promise');
 
 
-var yargs = require('yargs');
-var argv = yargs
+let yargs = require('yargs');
+let argv = yargs
   .usage('Usage: $0 <pluginPath> [options]')
   .options('watch', {
     describe: 'Watch for changes and rebuild',
@@ -30,7 +30,7 @@ var argv = yargs
   .epilog('Project: https://github.com/gameclosure/devkit-plugin-builder')
   .argv;
 
-var logging = require('../logging');
+let logging = require('../logging');
 if (argv.verbose) {
   logging.verbose = argv.verbose;
   lazy.Promise.config({
@@ -38,22 +38,15 @@ if (argv.verbose) {
   });
 }
 
-
-// Set up the global Class object
-Class = function(classDef) {
-  return new lazy.eeClass(classDef);
-};
-
-
-var pluginBuilder = require('../index');
+let pluginBuilder = require('../index');
 pluginBuilder.updateOpts(argv);
 
 
 // MAIN //
 
-var logger = logging.get('pluginBuilder');
+let logger = logging.get('pluginBuilder');
 
-var compilePlugin = function(moduleDir, watch, cb) {
+let compilePlugin = function(moduleDir, watch, cb) {
   if (watch) {
     pluginBuilder.executeRunnerTask(moduleDir, 'watch', cb);
   } else {

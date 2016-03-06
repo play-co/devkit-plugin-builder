@@ -1,8 +1,10 @@
-var path = require('path');
+'use strict';
 
-module.exports = Class({
+let path = require('path');
 
-  init: function(pluginBuilder, opts) {
+class Builder {
+
+  constructor (pluginBuilder, opts) {
     this.pluginBuilder = pluginBuilder;
     this.modulePath = opts.modulePath;
     this.modulePackage = opts.modulePackage;
@@ -14,15 +16,16 @@ module.exports = Class({
     this.buildPath = path.join(this.modulePath, 'build', this.src);
 
     this.moduleName = this.modulePackage.name;
-  },
+  }
 
   /** Run any tasks required to compile this module, add promises to task array */
-  compile: function(tasks) {
-    // stub
-  },
-
-  watch: function(tasks) {
+  compile (tasks) {
     // stub
   }
 
-});
+  watch (tasks) {
+    // stub
+  }
+}
+
+module.exports = Builder;

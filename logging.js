@@ -1,5 +1,7 @@
-var tracer = require('tracer');
-var colors = require('colors');
+'use strict';
+
+let tracer = require('tracer');
+let colors = require('colors');
 
 colors.setTheme({
   silly: 'rainbow',
@@ -21,7 +23,7 @@ module.exports = {
       level: this.verbose ? 'debug' : 'info',
       format : '{{timestamp}}{{name}}\t{{title}}{{message}}', //  (in {{file}}:{{line}})
       dateformat : "HH:MM:ss",
-      preprocess :  function(data) {
+      preprocess :  data => {
         if (this.verbose) {
           data.timestamp = data.timestamp + ' ';
         } else {
@@ -33,11 +35,11 @@ module.exports = {
           data.title = '';
         } else {
           // color titles
-          var colored = data.title[data.title];
+          let colored = data.title[data.title];
           data.title = (colored || data.title) + ' ';
         }
         data.timestamp = data.timestamp.gray;
-      }.bind(this)
+      }
     });
   }
 };
