@@ -3,6 +3,7 @@ var path = require('path');
 var lazy = require('lazy-cache')(require);
 lazy('mkdirp');
 lazy('bluebird', 'Promise');
+lazy('merge');
 
 var JsioBuilder = require('./builders/JsioBuilder');
 var GenericBuilder = require('./builders/GenericBuilder');
@@ -17,6 +18,15 @@ module.exports = {
     generic: GenericBuilder
   },
 
+  opts: {
+    livereload: true
+  },
+
+  updateOpts: function(opts) {
+    logger.info('Updating opts:', opts);
+    lazy.merge(this.opts, opts);
+  },
+
   load: function(modulePath) {
     logger.info('Loading module at:', modulePath);
     try {
@@ -29,6 +39,24 @@ module.exports = {
       return modulePackage;
     } catch(e) {
       throw new Error('module contains no package.json');
+    }
+  },
+
+  checkBuilder: function(modulePath, modulePackage, builderName, pluginBuilders) {
+    var builderMap = modulePackage.devkit.pluginBuilder[builderName];
+    if (!builderMap) {
+      return;
+    }
+
+    for (var i = 0; i < builderMap.length; i++) {
+      var builderInfo = builderMap[i];
+      var builder = new this.builders[builderName](this, {
+        modulePath: modulePath,
+        modulePackage: modulePackage,
+
+        builderInfo: builderInfo
+      });
+      pluginBuilders.push(builder);
     }
   },
 
@@ -67,24 +95,5 @@ module.exports = {
         logger.error(e);
         cb && cb(e);
       });
-  },
-
-  checkBuilder: function(modulePath, modulePackage, builderName, pluginBuilders) {
-    var builderMap = modulePackage.devkit.pluginBuilder[builderName];
-    if (!builderMap) {
-      return;
-    }
-
-    for (var i = 0; i < builderMap.length; i++) {
-      var builderInfo = builderMap[i];
-      var builder = new this.builders[builderName]({
-        modulePath: modulePath,
-        modulePackage: modulePackage,
-
-        builderInfo: builderInfo
-      });
-      pluginBuilders.push(builder);
-    }
   }
-
 };

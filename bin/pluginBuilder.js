@@ -15,6 +15,12 @@ var argv = yargs
     boolean: true,
     optional: true
   })
+  .options('livereload', {
+    describe: 'Use livereload',
+    boolean: true,
+    optional: true,
+    default: true
+  })
   .help('h')
   .alias('h', 'help')
   .epilog('Project: https://github.com/gameclosure/devkit-plugin-builder')
@@ -31,6 +37,7 @@ Class = function(classDef) {
 
 
 var pluginBuilder = require('../index');
+pluginBuilder.updateOpts(argv);
 
 
 // MAIN //

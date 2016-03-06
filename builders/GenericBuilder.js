@@ -22,8 +22,8 @@ var logging = require('../logging');
 module.exports = Class({
   inherits: Builder,
 
-  init: function constructor(opts) {
-    constructor.super.call(this, opts);
+  init: function constructor(pluginBuilder, opts) {
+    constructor.super.call(this, pluginBuilder, opts);
 
     this.path = {
       HTML: path.join(this.srcPath, '**', '**.html'),
@@ -129,7 +129,9 @@ module.exports = Class({
     this.compress = false;
     var logger = this.logger;
 
-    plugins.livereload.listen();
+    if (this.pluginBuilder.opts.livereload) {
+      plugins.livereload.listen();
+    }
 
     gulp.watch(this.path.BOWER_JSON, this._bower.bind(this));
     gulp.watch(this.path.HTML, this.copy.bind(this));

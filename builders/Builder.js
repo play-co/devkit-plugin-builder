@@ -2,7 +2,8 @@ var path = require('path');
 
 module.exports = Class({
 
-  init: function(opts) {
+  init: function(pluginBuilder, opts) {
+    this.pluginBuilder = pluginBuilder;
     this.modulePath = opts.modulePath;
     this.modulePackage = opts.modulePackage;
     this.builderInfo = opts.builderInfo;

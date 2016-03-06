@@ -17,8 +17,8 @@ var logging = require('../logging');
 module.exports = Class({
   inherits: Builder,
 
-  init: function constructor(opts) {
-    constructor.super.call(this, opts);
+  init: function constructor(pluginBuilder, opts) {
+    constructor.super.call(this, pluginBuilder, opts);
 
     this.paths = {
       base: path.join(__dirname, '..', '..'),
