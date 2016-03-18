@@ -38,6 +38,8 @@ class GenericBuilder extends Builder {
       STYLUS_FILES: path.join(this.srcPath, 'css', '**', '*.*'),
       FONT: path.join(this.srcPath, 'fonts', '*.*'),
       DEST_FONT: path.join(this.buildPath, 'fonts'),
+      STATIC: path.join(this.srcPath, 'static', '**', '*.*'),
+      STATIC_DEST: path.join(this.buildPath, 'static'),
       BOWER_JSON: path.join(this.modulePath, 'bower.json'),
       BOWER_DEST: path.join(this.buildPath, 'bower')
     };
@@ -108,9 +110,16 @@ class GenericBuilder extends Builder {
   }
 
 
-  copy () {
+  copyHtml () {
     return gulp.src(this.path.HTML)
       .pipe(gulp.dest(this.path.DEST))
+      .pipe(plugins.livereload());
+  }
+
+
+  copyStatic () {
+    return gulp.src(this.path.STATIC)
+      .pipe(gulp.dest(this.path.STATIC_DEST))
       .pipe(plugins.livereload());
   }
 
@@ -141,9 +150,10 @@ class GenericBuilder extends Builder {
     }
 
     // Run copy once to make sure development replace happens (index.html)
-    return this.runAsPromise('copy').then(() => {
+    return this.runAsPromise('copyHtml').then(() => {
       gulp.watch(this.path.BOWER_JSON, this._bower.bind(this));
-      gulp.watch(this.path.HTML, this.copy.bind(this));
+      gulp.watch(this.path.HTML, this.copyHtml.bind(this));
+      gulp.watch(this.path.STATIC, this.copyStatic.bind(this));
       gulp.watch(this.path.STYLUS_FILES, this.stylus.bind(this));
 
       let watcher = lazy.watchify(this._browserify({
@@ -227,7 +237,8 @@ class GenericBuilder extends Builder {
 
 
   compile (tasks) {
-    tasks.push(this.runAsPromise('copy'));
+    tasks.push(this.runAsPromise('copyHtml'));
+    tasks.push(this.runAsPromise('copyStatic'));
     if (fs.existsSync(this.path.BOWER_JSON)) {
       tasks.push(this._bower());
     }
