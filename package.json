@@ -1,6 +1,6 @@
 {
   "name": "devkit-plugin-builder",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "dependencies": {
     "babelify": "=6.3.0",
     "bluebird": "^3.0.6",
